@@ -9,11 +9,6 @@
 
 PropertyAssistAI is an intelligent assistant for real estate professionals that handles client inquiries, property information, and CRM updates. Built with modern AI technologies, this system provides human-like conversation capabilities while maintaining sub-second response times.
 
-### Demo
-
-https://propertyassistai-demo.yourdomain.com
-
-![Demo Screenshot](./assets/demo-screenshot.png)
 
 ## 🚀 Key Features
 
@@ -48,7 +43,7 @@ This project demonstrates expertise in:
 
 The system uses a modern, scalable architecture:
 
-![Architecture Diagram](./assets/architecture-diagram.png)
+![Architecture Diagram](https://github.com/mwaqas-sudo/property-assist-AI/blob/main/assets/architecture-diagram.svg)
 
 Key components:
 - Optimized RAG pipeline for property knowledge retrieval
