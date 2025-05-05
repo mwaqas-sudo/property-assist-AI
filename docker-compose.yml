@@ -1,0 +1,166 @@
+# Docker Compose file for PropertyAssistAI
+version: '3.8'
+
+services:
+  # API service
+  api:
+    build:
+      context: .
+      dockerfile: ./deploy/docker/Dockerfile
+    image: propertyassistai:latest
+    container_name: propertyassistai_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://property_user:${DB_PASSWORD}@postgres:5432/property_db
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+      - SALESFORCE_CLIENT_ID=${SALESFORCE_CLIENT_ID}
+      - SALESFORCE_CLIENT_SECRET=${SALESFORCE_CLIENT_SECRET}
+      - SALESFORCE_AUTH_URL=${SALESFORCE_AUTH_URL}
+      - MAX_CONTEXT_LENGTH=4000
+      - LLM_RESPONSE_TIMEOUT=0.8
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - propertyassistai_network
+
+  # Web interface
+  web:
+    build:
+      context: ./web
+      dockerfile: ./Dockerfile
+    image: propertyassistai_web:latest
+    container_name: propertyassistai_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+    environment:
+      - API_URL=http://api:8000
+      - ENVIRONMENT=production
+    networks:
+      - propertyassistai_network
+
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:latest
+    container_name: propertyassistai_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=property_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=property_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/docker/init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - propertyassistai_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U property_user -d property_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: propertyassistai_redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - propertyassistai_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Vector database update service
+  vectordb_updater:
+    build:
+      context: .
+      dockerfile: ./deploy/docker/Dockerfile.worker
+    image: propertyassistai_worker:latest
+    container_name: propertyassistai_vectordb_updater
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://property_user:${DB_PASSWORD}@postgres:5432/property_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+      - UPDATE_INTERVAL=3600
+    volumes:
+      - ./data:/app/data
+    networks:
+      - propertyassistai_network
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: propertyassistai_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./deploy/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    networks:
+      - propertyassistai_network
+
+  # Grafana for visualizing metrics
+  grafana:
+    image: grafana/grafana:latest
+    container_name: propertyassistai_grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - propertyassistai_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  propertyassistai_network:
+    driver: bridge
