@@ -62,22 +62,17 @@
   <text x="440" y="495" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="white">K8s</text>
   
   <!-- Connection Lines -->
-  <!-- UI to API -->
   <line x1="210" y1="150" x2="310" y2="140" stroke="#95a5a6" stroke-width="2" />
-  <!-- API to Core -->
   <line x1="400" y1="180" x2="400" y2="230" stroke="#95a5a6" stroke-width="2" />
-  <!-- API to Integrations -->
   <line x1="490" y1="140" x2="600" y2="165" stroke="#95a5a6" stroke-width="2" />
-  <!-- Core to Vector DB -->
   <line x1="270" y1="295" x2="210" y2="320" stroke="#95a5a6" stroke-width="2" />
-  <!-- Core to Cache -->
   <line x1="270" y1="330" x2="210" y2="420" stroke="#95a5a6" stroke-width="2" />
-  <!-- Core to Monitoring -->
   <line x1="530" y1="295" x2="600" y2="345" stroke="#95a5a6" stroke-width="2" />
   
   <!-- Performance Indicators -->
   <rect x="600" y="430" width="150" height="110" rx="10" fill="#27ae60" opacity="0.8" />
   <text x="675" y="460" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Performance</text>
-  <text x="675" y="485" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="white">< 1s Response Time</text>
+  <text x="675" y="485" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="white">Sub-1s Response Time</text>
   <text x="675" y="505" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="white">35K+ Monthly Users</text>
   <text x="675" y="525" font-family="Arial, sans-serif" font-size="12" text-anchor="middle" fill="white">99.7% Uptime</text>
+</svg>
